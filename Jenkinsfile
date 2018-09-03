@@ -4,7 +4,7 @@ pipeline {
     }
     environment {
       ORG               = 'acm-workshop'
-      APP_NAME          = 'sockshop-ws'
+      APP_NAME          = 'payment'
       GIT_PROVIDER      = 'github.com'
       CHARTMUSEUM_CREDS = credentials('jenkins-x-chartmuseum')
     }
@@ -19,7 +19,7 @@ pipeline {
           HELM_RELEASE = "$PREVIEW_NAMESPACE".toLowerCase()
         }
         steps {
-          dir ('/home/jenkins/go/src/github.com/acm-workshop/sockshop-ws') {
+          dir ('/home/jenkins/go/src/github.com/acm-workshop/payment') {
             checkout scm
             container('go') {
               sh "make linux"
@@ -29,7 +29,7 @@ pipeline {
               sh "jx step post build --image $DOCKER_REGISTRY/$ORG/$APP_NAME:$PREVIEW_VERSION"
             }
           }
-          dir ('/home/jenkins/go/src/github.com/acm-workshop/sockshop-ws/charts/preview') {
+          dir ('/home/jenkins/go/src/github.com/acm-workshop/payment/charts/preview') {
             container('go') {
               sh "make preview"
               sh "jx preview --app $APP_NAME --dir ../.."
@@ -43,10 +43,10 @@ pipeline {
         }
         steps {
           container('go') {
-            dir ('/home/jenkins/go/src/github.com/acm-workshop/sockshop-ws') {
+            dir ('/home/jenkins/go/src/github.com/acm-workshop/payment') {
               checkout scm
             }
-            dir ('/home/jenkins/go/src/github.com/acm-workshop/sockshop-ws/charts/sockshop-ws') {
+            dir ('/home/jenkins/go/src/github.com/acm-workshop/payment/charts/payment') {
                 // ensure we're not on a detached head
                 sh "git checkout master"
                 // until we switch to the new kubernetes / jenkins credential implementation use git credentials store
@@ -54,16 +54,16 @@ pipeline {
 
                 sh "jx step git credentials"
             }
-            dir ('/home/jenkins/go/src/github.com/acm-workshop/sockshop-ws') {
+            dir ('/home/jenkins/go/src/github.com/acm-workshop/payment') {
               // so we can retrieve the version in later steps
               sh "echo \$(jx-release-version) > VERSION"
             }
-            dir ('/home/jenkins/go/src/github.com/acm-workshop/sockshop-ws/charts/sockshop-ws') {
+            dir ('/home/jenkins/go/src/github.com/acm-workshop/payment/charts/payment') {
               sh "make tag"
             }
-            dir ('/home/jenkins/go/src/github.com/acm-workshop/sockshop-ws') {
+            dir ('/home/jenkins/go/src/github.com/acm-workshop/payment') {
               container('go') {
-                sh "make build"
+                sh "make release"
                 sh 'export VERSION=`cat VERSION` && skaffold build -f skaffold.yaml'
 
                 sh "jx step post build --image $DOCKER_REGISTRY/$ORG/$APP_NAME:\$(cat VERSION)"
@@ -77,7 +77,7 @@ pipeline {
           branch 'master'
         }
         steps {
-          dir ('/home/jenkins/go/src/github.com/acm-workshop/sockshop-ws/charts/sockshop-ws') {
+          dir ('/home/jenkins/go/src/github.com/acm-workshop/payment/charts/payment') {
             container('go') {
               sh 'jx step changelog --version v\$(cat ../../VERSION)'
 
