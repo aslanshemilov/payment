@@ -58,9 +58,9 @@ pipeline {
               // so we can retrieve the version in later steps
               sh "echo \$(jx-release-version) > VERSION"
             }
-            dir ('/home/jenkins/go/src/github.com/acm-workshop/payment/charts/payment') {
-              sh "make tag"
-            }
+            // dir ('/home/jenkins/go/src/github.com/acm-workshop/payment/charts/payment') {
+            //  sh "make tag"
+            // }
             dir ('/home/jenkins/go/src/github.com/acm-workshop/payment') {
               container('go') {
                 sh "make release"
